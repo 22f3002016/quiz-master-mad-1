@@ -11,7 +11,8 @@ class User(db.Model, UserMixin):
     qualification = db.Column(db.String)
     dob = db.Column(db.Date)
 
-    scores = db.relationship('Score', backref='user', lazy=True)
+    # Cascade delete applied to prevent integrity errors
+    scores = db.relationship('Score', backref='user', lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -24,26 +25,27 @@ class Subject(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
 
-    chapters = db.relationship('Chapter', backref='subject', lazy=True)
+    # Cascade delete to handle dependent chapters
+    chapters = db.relationship('Chapter', backref='subject', lazy=True, cascade="all, delete-orphan")
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id', ondelete='CASCADE'), nullable=False)
 
-    quizzes = db.relationship('Quiz', backref='chapter', lazy=True)
+    quizzes = db.relationship('Quiz', backref='chapter', lazy=True, cascade="all, delete-orphan")
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     date_of_quiz = db.Column(db.DateTime)
     time_duration = db.Column(db.Integer, default=0)
-    chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
-    total_questions = db.Column(db.Integer, default=0)  # Added field to track total questions
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id', ondelete='CASCADE'), nullable=False)
+    total_questions = db.Column(db.Integer, default=0)  
 
-    questions = db.relationship('Question', backref='quiz', lazy=True)
-    scores = db.relationship('Score', backref='quiz', lazy=True)
+    questions = db.relationship('Question', backref='quiz', lazy=True, cascade="all, delete-orphan")
+    scores = db.relationship('Score', backref='quiz', lazy=True, cascade="all, delete-orphan")
 
     def update_question_count(self):
         self.total_questions = len(self.questions)
@@ -57,12 +59,12 @@ class Question(db.Model):
     option3 = db.Column(db.String(200), nullable=False)
     option4 = db.Column(db.String(200), nullable=False)
     correct_option = db.Column(db.Integer, nullable=False)
-    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id', ondelete='CASCADE'), nullable=False)
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     total_scored = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    total_questions = db.Column(db.Integer, nullable=False, default=0)  # Ensure default value
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False, default=0)
