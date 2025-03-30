@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Search Results</h2>
+    <p>Showing results for "{{ search_query }}" in {{ search_type }}</p>
+    
+    {% if not results %}
+        <div class="alert alert-info">No results found for your search query.</div>
+    {% else %}
+        {% if search_type == 'subject' %}
+            <div class="row">
+                {% for subject in results %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ subject.name }}</h5>
+                            <p class="card-text">{{ subject.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% elif search_type == 'quiz' %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Quiz Name</th>
+                            <th>Subject</th>
+                            <th>Chapter</th>
+                            <th>Date</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in results %}
+                        <tr>
+                            <td>{{ quiz.name }}</td>
+                            <td>{{ quiz.subject_name }}</td>
+                            <td>{{ quiz.chapter_name }}</td>
+                            <td>{{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ quiz.time_duration }} minutes</td>
+                            <td>
+                                <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">Take Quiz</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
