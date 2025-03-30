@@ -1,22 +1,19 @@
-from controllers import create_app, db, login_manager
+from controllers import app, db, login_manager
 from flask import render_template, redirect, flash, url_for, request
 from controllers.forms import RegisterForm, LoginForm
 from models.models import User, Subject, Chapter, Quiz, Question, Score
 from flask_login import login_user, login_required, logout_user, current_user
+import os
 
-app = create_app()
 
-# THIS IS CRUCIAL - define user_loader function here
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Rest of your routes remain the same
 @app.cli.command("db-create")
 def create_db():
     with app.app_context():
         db.create_all()
-        #admindata
 
         admin = User.query.filter_by(username="admin@quizmaster.com").first()
         if not admin :
