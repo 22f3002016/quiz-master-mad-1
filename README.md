@@ -1,4 +1,4 @@
-# Quiz Master - Project Report
+# Quiz Master - Project
 ---
 
 ## Description
