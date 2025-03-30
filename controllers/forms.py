@@ -55,4 +55,21 @@ class QuestionAnswerForm(FlaskForm):
     question_id = IntegerField(widget=HiddenInput())
     selected_option = RadioField('Select Answer', choices=[(1, ''), (2, ''), (3, ''), (4, '')], coerce=int)
 
+class AdminSearchForm(FlaskForm):
+    search_query = StringField('Search', validators=[DataRequired()])
+    search_type = SelectField('Search Type', choices=[
+        ('user', 'Users'),
+        ('subject', 'Subjects'),
+        ('chapter', 'Chapters'),
+        ('quiz', 'Quizzes'),
+        ('question', 'Questions')
+    ])
+    submit = SubmitField('Search')
 
+class UserSearchForm(FlaskForm):
+    search_query = StringField('Search', validators=[DataRequired()])
+    search_type = SelectField('Search Type', choices=[
+        ('subject', 'Subjects'),
+        ('quiz', 'Quizzes')
+    ])
+    submit = SubmitField('Search')

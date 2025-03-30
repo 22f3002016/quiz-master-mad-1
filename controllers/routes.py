@@ -1,16 +1,18 @@
 from controllers import app, db, login_manager
 from flask import render_template, redirect, flash, url_for, request, jsonify
-from controllers.forms import RegisterForm, LoginForm,ChapterForm, QuizForm, QuestionForm, QuizAttemptForm, QuestionAnswerForm
+from controllers.forms import RegisterForm, LoginForm, SubjectForm, ChapterForm, QuizForm, QuestionForm, QuizAttemptForm, QuestionAnswerForm
 from models.models import User, Subject, Chapter, Quiz, Question, Score 
 from flask_login import login_user, login_required, logout_user, current_user
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 import json
+from controllers.forms import UserSearchForm, AdminSearchForm
 from flask_wtf.csrf import generate_csrf 
-import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+import matplotlib 
+import matplotlib.pyplot as plt
 
 
 @login_manager.user_loader
@@ -81,10 +83,8 @@ def login():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    # Get the latest 5 scores for the current user
     recent_scores = Score.query.filter_by(user_id=current_user.id).order_by(Score.timestamp.desc()).limit(5).all()
     
-    # Get all available quizzes with their chapters and subjects for the user to take
     quizzes = Quiz.query.join(Chapter).join(Subject).with_entities(
         Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
         Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
@@ -108,12 +108,11 @@ def admin_dashboard():
         flash("You do not have access to this page", 'danger')
         return redirect(url_for("home"))
     
-    # Get counts for dashboard metrics
     subject_count = Subject.query.count()
     chapter_count = Chapter.query.count()
     quiz_count = Quiz.query.count()
     question_count = Question.query.count()
-    user_count = User.query.count() - 1  # Excluding admin
+    user_count = User.query.count() - 1  
     score_count = Score.query.count()
     
     return render_template("admin/dashboard.html", 
@@ -177,7 +176,6 @@ def admin_delete_subject(subject_id):
     flash('Subject deleted successfully', 'success')
     return redirect(url_for('admin_manage_subjects'))
 
-# Chapter Management
 @app.route("/admin/manage_chapters", methods=['GET', 'POST'])
 @login_required
 def admin_manage_chapters():
@@ -199,7 +197,6 @@ def admin_manage_chapters():
         flash('Chapter created successfully', 'success')
         return redirect(url_for('admin_manage_chapters'))
     
-    # Get all chapters with subject names
     chapters = Chapter.query.join(Subject).with_entities(
         Chapter.id, Chapter.name, Chapter.description, Subject.name.label('subject_name')
     ).all()
@@ -240,7 +237,6 @@ def admin_delete_chapter(chapter_id):
     flash('Chapter deleted successfully', 'success')
     return redirect(url_for('admin_manage_chapters'))
 
-# Quiz Management
 @app.route("/admin/manage_quizzes", methods=['GET', 'POST'])
 @login_required
 def admin_manage_quizzes():
@@ -264,7 +260,6 @@ def admin_manage_quizzes():
         flash('Quiz created successfully', 'success')
         return redirect(url_for('admin_manage_quizzes'))
     
-    # Get all quizzes with chapter and subject names
     quizzes = Quiz.query.join(Chapter).join(Subject).with_entities(
         Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
         Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
@@ -308,7 +303,6 @@ def admin_delete_quiz(quiz_id):
     flash('Quiz deleted successfully', 'success')
     return redirect(url_for('admin_manage_quizzes'))
 
-# Question Management
 @app.route("/admin/manage_questions", methods=['GET', 'POST'])
 @login_required
 def admin_manage_questions():
@@ -318,11 +312,9 @@ def admin_manage_questions():
     
     form = QuestionForm()
     
-    # Ensure Quiz and Chapter are imported
     quizzes = Quiz.query.all()
-    chapters = {ch.id: ch.name for ch in Chapter.query.all()}  # Create a dictionary for lookup
+    chapters = {ch.id: ch.name for ch in Chapter.query.all()}  
     
-    # Populate quiz choices in form
     form.quiz_id.choices = [(q.id, f"{q.name} ({chapters.get(q.chapter_id, 'Unknown Chapter')})") 
                             for q in quizzes]
     
@@ -341,7 +333,6 @@ def admin_manage_questions():
         flash('Question created successfully', 'success')
         return redirect(url_for('admin_manage_questions'))
     
-    # Filter questions by quiz if quiz_id is provided
     quiz_filter = request.args.get('quiz_id', None, type=int)
     if quiz_filter:
         questions = Question.query.filter_by(quiz_id=quiz_filter).all()
@@ -584,5 +575,83 @@ def api_quiz_stats():
 @app.context_processor
 def inject_now():
     return {'current_year': datetime.now().year}
+
+@app.route("/admin/search", methods=['GET'])
+@login_required
+def admin_search():
+    if current_user.username != "admin@quizmaster.com":
+        flash("You do not have access to this page", 'danger')
+        return redirect(url_for("home"))
+    
+    search_query = request.args.get('search_query', '')
+    search_type = request.args.get('search_type', 'user')
+    results = []
+    
+    if search_query:
+        # Wildcard search pattern
+        search_pattern = f"%{search_query}%"
+        
+        if search_type == 'user':
+            results = User.query.filter(
+                (User.username.like(search_pattern) | 
+                 User.fullname.like(search_pattern)) &
+                (User.username != "admin@quizmaster.com")
+            ).all()
+        elif search_type == 'subject':
+            results = Subject.query.filter(
+                Subject.name.like(search_pattern) | 
+                Subject.description.like(search_pattern)
+            ).all()
+        elif search_type == 'chapter':
+            results = Chapter.query.join(Subject).with_entities(
+                Chapter.id, Chapter.name, Chapter.description, 
+                Subject.name.label('subject_name')
+            ).filter(
+                Chapter.name.like(search_pattern) | 
+                Chapter.description.like(search_pattern)
+            ).all()
+        elif search_type == 'quiz':
+            results = Quiz.query.join(Chapter).join(Subject).with_entities(
+                Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
+                Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
+            ).filter(
+                Quiz.name.like(search_pattern)
+            ).all()
+        elif search_type == 'question':
+            results = Question.query.join(Quiz).with_entities(
+                Question.id, Question.question_statement, 
+                Quiz.name.label('quiz_name')
+            ).filter(
+                Question.question_statement.like(search_pattern)
+            ).all()
+    
+    return render_template("admin/search.html", results=results, search_type=search_type, search_query=search_query)
+
+@app.route("/search", methods=['GET'])
+@login_required
+def user_search():
+    search_query = request.args.get('search_query', '')
+    search_type = request.args.get('search_type', 'subject')
+    results = []
+    
+    if search_query:
+        # Wildcard search pattern
+        search_pattern = f"%{search_query}%"
+        
+        if search_type == 'subject':
+            results = Subject.query.filter(
+                Subject.name.like(search_pattern) | 
+                Subject.description.like(search_pattern)
+            ).all()
+        elif search_type == 'quiz':
+            results = Quiz.query.join(Chapter).join(Subject).with_entities(
+                Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
+                Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
+            ).filter(
+                Quiz.name.like(search_pattern)
+            ).all()
+    
+    return render_template("search.html", results=results, search_type=search_type, search_query=search_query)
+
 
 
