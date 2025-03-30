@@ -1,3 +1,4 @@
+from datetime import datetime
 from controllers import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -17,10 +18,6 @@ class User(db.Model, UserMixin):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-    
-
-
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,8 +40,14 @@ class Quiz(db.Model):
     date_of_quiz = db.Column(db.DateTime)
     time_duration = db.Column(db.Integer, default=0)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
+    total_questions = db.Column(db.Integer, default=0)  # Added field to track total questions
 
     questions = db.relationship('Question', backref='quiz', lazy=True)
+    scores = db.relationship('Score', backref='quiz', lazy=True)
+
+    def update_question_count(self):
+        self.total_questions = len(self.questions)
+        db.session.commit()
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,5 +65,4 @@ class Score(db.Model):
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-
+    total_questions = db.Column(db.Integer, nullable=False, default=0)  # Ensure default value

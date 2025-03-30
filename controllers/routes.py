@@ -13,6 +13,8 @@ from io import BytesIO
 import base64
 import matplotlib 
 import matplotlib.pyplot as plt
+from sqlalchemy import func
+
 
 
 @login_manager.user_loader
@@ -83,22 +85,61 @@ def login():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    recent_scores = Score.query.filter_by(user_id=current_user.id).order_by(Score.timestamp.desc()).limit(5).all()
-    
-    quizzes = Quiz.query.join(Chapter).join(Subject).with_entities(
-        Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
-        Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
-    ).all()
-    
-    return render_template("dashboard.html", user=current_user, recent_scores=recent_scores, quizzes=quizzes)
+    try:
+        # Get recent scores with question count from the score record itself
+        recent_scores = Score.query.filter_by(user_id=current_user.id)\
+            .order_by(Score.timestamp.desc())\
+            .limit(5)\
+            .all()
+
+        quizzes = Quiz.query.join(Chapter).join(Subject).with_entities(
+            Quiz.id, Quiz.name, Quiz.date_of_quiz, Quiz.time_duration,
+            Chapter.name.label('chapter_name'), Subject.name.label('subject_name')
+        ).all()
+        
+        # Serialize recent scores using the stored total_questions
+        recent_scores_data = [
+            {
+                'quiz_name': score.quiz.name if score.quiz else "Unknown Quiz",
+                'total_scored': score.total_scored or 0,
+                'questions_count': score.total_questions or 1,
+                'timestamp': score.timestamp.strftime('%Y-%m-%d %H:%M:%S') if score.timestamp else "Unknown"
+            }
+            for score in recent_scores
+        ]
+
+        # Calculate score distribution using the stored total_questions
+        all_scores = Score.query.filter_by(user_id=current_user.id).all()
+        score_distribution = {'0-25': 0, '26-50': 0, '51-75': 0, '76-100': 0}
+
+        for score in all_scores:
+            if score.total_questions and score.total_questions > 0:
+                percentage = (score.total_scored / score.total_questions) * 100
+                if percentage <= 25:
+                    score_distribution['0-25'] += 1
+                elif percentage <= 50:
+                    score_distribution['26-50'] += 1
+                elif percentage <= 75:
+                    score_distribution['51-75'] += 1
+                else:
+                    score_distribution['76-100'] += 1
+
+        return render_template("dashboard.html", 
+                              user=current_user, 
+                              recent_scores=recent_scores_data, 
+                              quizzes=quizzes,
+                              score_distribution=score_distribution)
+    except Exception as e:
+        # Add proper error handling here
+        flash(f"An error occurred: {str(e)}", "danger")
+        return redirect(url_for('home'))
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out', 'info')
+    flash("You have been logged out.", "info")
     return redirect(url_for('login'))
-
 
 
 @app.route("/admin/dashboard") 
@@ -449,7 +490,6 @@ def take_quiz(quiz_id):
 def submit_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
-    
 
     total_questions = len(questions)
     correct_answers = 0
@@ -458,10 +498,11 @@ def submit_quiz(quiz_id):
         selected_option = request.form.get(f'selected_option-{question.id}')
         if selected_option and int(selected_option) == question.correct_option:
             correct_answers += 1
-    
 
+    # Add total_questions to prevent IntegrityError
     score = Score(
         total_scored=correct_answers,
+        total_questions=total_questions,
         quiz_id=quiz_id,
         user_id=current_user.id
     )

@@ -11,6 +11,7 @@
 </div>
 
 <div class="row">
+    <!-- Available Quizzes Section -->
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
@@ -27,7 +28,7 @@
                                         <h6 class="card-subtitle mb-2 text-muted">{{ quiz.subject_name }} - {{ quiz.chapter_name }}</h6>
                                         <p class="card-text">
                                             <small class="text-muted">
-                                                Date: {{ quiz.date_of_quiz.strftime('%d %b, %Y') }}<br>
+                                                Date: {{ quiz.date_of_quiz.strftime('%d %b, %Y') if quiz.date_of_quiz else 'N/A' }}<br>
                                                 Duration: {{ quiz.time_duration }} minutes
                                             </small>
                                         </p>
@@ -38,14 +39,13 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        No quizzes available at the moment. Please check back later.
-                    </div>
+                    <div class="alert alert-info">No quizzes available at the moment. Please check back later.</div>
                 {% endif %}
             </div>
         </div>
     </div>
-    
+
+    <!-- Recent Scores Section -->
     <div class="col-md-4">
         <div class="card">
             <div class="card-header bg-success text-white">
@@ -55,16 +55,14 @@
                 {% if recent_scores %}
                     <ul class="list-group">
                         {% for score in recent_scores %}
-                            {% set quiz = score.quiz %}
-                            {% set questions_count = quiz.questions|length %}
-                            {% set percentage = (score.total_scored / questions_count) * 100 if questions_count > 0 else 0 %}
+                            {% set percentage = (score.total_scored / score.questions_count * 100) if score.questions_count > 0 else 0 %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ quiz.name }}</strong><br>
-                                    <small class="text-muted">{{ score.timestamp.strftime('%d %b, %Y') }}</small>
+                                    <strong>{{ score.quiz_name }}</strong><br>
+                                    <small class="text-muted">{{ score.timestamp }}</small>
                                 </div>
-                                <span class="badge bg-primary rounded-pill">
-                                    {{ score.total_scored }}/{{ questions_count }} ({{ percentage|round(1) }}%)
+                                <span class="badge bg-{% if percentage >= 75 %}success{% elif percentage >= 50 %}warning{% else %}danger{% endif %} rounded-pill">
+                                    {{ score.total_scored }}/{{ score.questions_count }} ({{ percentage|round(1) }}%)
                                 </span>
                             </li>
                         {% endfor %}
@@ -73,12 +71,72 @@
                         <a href="{{ url_for('my_scores') }}" class="btn btn-outline-success btn-sm">View All Scores</a>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
-                        You haven't taken any quizzes yet. Start a quiz to see your scores here.
-                    </div>
+                    <div class="alert alert-info">You haven't taken any quizzes yet. Start a quiz to see your scores here.</div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Chart Section -->
+<div class="row mt-5">
+    <div class="col-md-6">
+        <h5>Recent Quiz Performance</h5>
+        <canvas id="performanceChart" height="250"></canvas>
+    </div>
+    <div class="col-md-6">
+        <h5>Score Distribution</h5>
+        <canvas id="scoreChart" height="250"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recentScores = {{ recent_scores|tojson|safe }};
+    const scoreRanges = {{ score_distribution|tojson|safe }};
+
+    // Check for empty data
+    if (!recentScores || recentScores.length === 0) {
+        document.getElementById('performanceChart').parentElement.innerHTML = '<p class="text-danger">No recent scores available to display.</p>';
+    } else {
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: recentScores.map(score => score.quiz_name),
+                datasets: [{
+                    label: 'Score (%)',
+                    data: recentScores.map(score => (score.total_scored / score.questions_count * 100)),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            }
+        });
+    }
+
+    if (!scoreRanges || Object.values(scoreRanges).every(val => val === 0)) {
+        document.getElementById('scoreChart').parentElement.innerHTML = '<p class="text-danger">No score distribution data available.</p>';
+    } else {
+        const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(scoreCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-25%', '26-50%', '51-75%', '76-100%'],
+                datasets: [{
+                    label: 'Number of Quizzes',
+                    data: [scoreRanges['0-25'], scoreRanges['26-50'], scoreRanges['51-75'], scoreRanges['76-100']],
+                    backgroundColor: ['#ff6384', '#ffce56', '#36a2eb', '#4bc0c0']
+                }]
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
