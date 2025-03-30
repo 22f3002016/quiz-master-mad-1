@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Edit Question</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group mb-3">
+                    {{ form.quiz_id.label(class="form-label") }}
+                    {{ form.quiz_id(class="form-select") }}
+                    {% for error in form.quiz_id.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group mb-3">
+                    {{ form.question_statement.label(class="form-label") }}
+                    {{ form.question_statement(class="form-control") }}
+                    {% for error in form.question_statement.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.option1.label(class="form-label") }}
+                            {{ form.option1(class="form-control") }}
+                            {% for error in form.option1.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.option2.label(class="form-label") }}
+                            {{ form.option2(class="form-control") }}
+                            {% for error in form.option2.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.option3.label(class="form-label") }}
+                            {{ form.option3(class="form-control") }}
+                            {% for error in form.option3.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.option4.label(class="form-label") }}
+                            {{ form.option4(class="form-control") }}
+                            {% for error in form.option4.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    {{ form.correct_option.label(class="form-label") }}
+                    {{ form.correct_option(class="form-select") }}
+                    {% for error in form.correct_option.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Update Question</button>
+                    <a href="{{ url_for('admin_manage_questions') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+<div class="position-sticky">
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_manage_subjects') }}">
+                <i class="fas fa-book"></i> Manage Subjects
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_manage_chapters') }}">
+                <i class="fas fa-bookmark"></i> Manage Chapters
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_manage_quizzes') }}">
+                <i class="fas fa-question-circle"></i> Manage Quizzes
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_manage_questions') }}">
+                <i class="fas fa-list"></i> Manage Questions
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_manage_users') }}">
+                <i class="fas fa-users"></i> Manage Users
+            </a>
+        </li>
+    </ul>
+</div>

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}QuizMaster - Quiz Results{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Quiz Results: {{ quiz.name }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-8 offset-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 mb-4">{{ percentage|round(1) }}%</h2>
+                        <h4>Score: {{ score.total_scored }} / {{ total_questions }}</h4>
+                        <p class="text-muted">Taken on {{ score.timestamp.strftime('%d %b, %Y at %H:%M') }}</p>
+                        
+                        {% if percentage >= 70 %}
+                            <div class="alert alert-success mt-3">
+                                <strong>Excellent work!</strong> You've passed this quiz with flying colors.
+                            </div>
+                        {% elif percentage >= 40 %}
+                            <div class="alert alert-warning mt-3">
+                                <strong>Good effort!</strong> You're on the right track, but could use some more practice.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger mt-3">
+                                <strong>Keep practicing!</strong> This topic needs more attention.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Take Again</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+            <a href="{{ url_for('my_scores') }}" class="btn btn-outline-info">View All Scores</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

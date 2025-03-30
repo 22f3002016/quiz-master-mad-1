@@ -1,78 +1,92 @@
-{% extends "layout.html" %}
-{% block title %}Register{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}QuizMaster - Register{% endblock %}
+
 {% block content %}
-<h1>User Registration</h1>
-<form method="post">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.username.label }}
-        {{ form.username (size=32)}}
-        {% if form.username.errors %}
-            <ul class="errors">
-                {% for error in form.username.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">Register</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control") }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.fullname.label(class="form-label") }}
+                        {{ form.fullname(class="form-control") }}
+                        {% if form.fullname.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.fullname.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.qualification.label(class="form-label") }}
+                        {{ form.qualification(class="form-control") }}
+                        {% if form.qualification.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.qualification.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.dob.label(class="form-label") }}
+                        {{ form.dob(class="form-control", type="date") }}
+                        {% if form.dob.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.dob.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control") }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.confirm_password.label(class="form-label") }}
+                        {{ form.confirm_password(class="form-control") }}
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.confirm_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+            </div>
+        </div>
     </div>
-    <div>
-        {{ form.password.label }}
-        {{ form.password (size=8)}}
-        {% if form.password.errors %}
-            <ul class="errors">
-                {% for error in form.password.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
-    </div>
-    <div>
-        {{ form.confirm_password.label }}
-        {{ form.confirm_password (size=8)}}
-        {% if form.confirm_password.errors %}
-            <ul class="errors">
-                {% for error in form.confirm_password.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
-    </div>
-    <div>
-        {{ form.fullname.label }}
-        {{ form.fullname (size=32)}}
-        {% if form.fullname.errors %}
-            <ul class="errors">
-                {% for error in form.fullname.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
-    </div>
-    <div>
-        {{ form.qualification.label }}
-        {{ form.qualification (size=32)}}
-        {% if form.qualification.errors %}
-            <ul class="errors">
-                {% for error in form.qualification.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
-    </div>
-    <div>
-        {{ form.dob.label }}
-        {{ form.dob (size=32)}}
-        {% if form.dob.errors %}
-            <ul class="errors">
-                {% for error in form.dob.errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}         
-    </div>
-    <div>
-        {{ form.submit }}
-    </div>
-    
-</form>
+</div>
 {% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}QuizMaster - {{ quiz.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">{{ quiz.name }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <p><strong>Duration:</strong> {{ quiz.time_duration }} minutes</p>
+            <p><strong>Total Questions:</strong> {{ forms|length }}</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}">
+            {% for question, form in forms %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Question {{ loop.index }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">{{ question.question_statement }}</p>
+                        {{ form.question_id }}
+                        <div class="list-group">
+                            {% for option_id, option_text in form.selected_option.choices %}
+                                <div class="mb-2">
+                                    <input type="radio" name="selected_option-{{ question.id }}" id="option{{ question.id }}-{{ option_id }}" value="{{ option_id }}" class="form-check-input me-2" required>
+                                    <label for="option{{ question.id }}-{{ option_id }}" class="form-check-label">{{ option_text }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">Submit Quiz</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set timer based on quiz duration
+    document.addEventListener('DOMContentLoaded', function() {
+        const quizDuration = {{ quiz.time_duration }}; // in minutes
+        const totalSeconds = quizDuration * 60;
+        let secondsRemaining = totalSeconds;
+        
+        // Create timer display if not exists
+        if (!document.getElementById('quiz-timer')) {
+            const timerDiv = document.createElement('div');
+            timerDiv.id = 'quiz-timer';
+            timerDiv.className = 'alert alert-warning position-fixed top-0 end-0 m-3';
+            timerDiv.style.zIndex = 1000;
+            document.body.appendChild(timerDiv);
+        }
+        
+        const timerDisplay = document.getElementById('quiz-timer');
+        
+        function updateTimer() {
+            const minutes = Math.floor(secondsRemaining / 60);
+            const seconds = secondsRemaining % 60;
+            timerDisplay.textContent = `Time Remaining: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            if (secondsRemaining <= 0) {
+                clearInterval(timerInterval);
+                document.querySelector('form').submit();
+                timerDisplay.textContent = 'Time\'s up! Submitting quiz...';
+            } else {
+                secondsRemaining--;
+            }
+        }
+        
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+    });
+</script>
+{% endblock %}

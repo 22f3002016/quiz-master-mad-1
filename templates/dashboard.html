@@ -1,9 +1,84 @@
-{% extends "layout.html" %} 
-{% block title %}User Dashboard{% endblock %} 
+{% extends 'base.html' %}
+
+{% block title %}QuizMaster - Dashboard{% endblock %}
 
 {% block content %}
-<h1>Welcome, {{ user.username }}!</h1>
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Welcome, {{ user.fullname }}!</h2>
+        <p class="lead">Here's your learning dashboard. Take quizzes and track your progress.</p>
+    </div>
+</div>
 
-<a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Available Quizzes</h4>
+            </div>
+            <div class="card-body">
+                {% if quizzes %}
+                    <div class="row">
+                        {% for quiz in quizzes %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card quiz-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ quiz.name }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">{{ quiz.subject_name }} - {{ quiz.chapter_name }}</h6>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Date: {{ quiz.date_of_quiz.strftime('%d %b, %Y') }}<br>
+                                                Duration: {{ quiz.time_duration }} minutes
+                                            </small>
+                                        </p>
+                                        <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">Take Quiz</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No quizzes available at the moment. Please check back later.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Recent Scores</h4>
+            </div>
+            <div class="card-body">
+                {% if recent_scores %}
+                    <ul class="list-group">
+                        {% for score in recent_scores %}
+                            {% set quiz = score.quiz %}
+                            {% set questions_count = quiz.questions|length %}
+                            {% set percentage = (score.total_scored / questions_count) * 100 if questions_count > 0 else 0 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ quiz.name }}</strong><br>
+                                    <small class="text-muted">{{ score.timestamp.strftime('%d %b, %Y') }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">
+                                    {{ score.total_scored }}/{{ questions_count }} ({{ percentage|round(1) }}%)
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('my_scores') }}" class="btn btn-outline-success btn-sm">View All Scores</a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        You haven't taken any quizzes yet. Start a quiz to see your scores here.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}QuizMaster - My Scores{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">My Quiz Scores</h3>
+    </div>
+    <div class="card-body">
+        {% if score_data %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Subject</th>
+                            <th>Chapter</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in score_data %}
+                            <tr>
+                                <td>{{ item.quiz.name }}</td>
+                                <td>{{ item.subject.name }}</td>
+                                <td>{{ item.chapter.name }}</td>
+                                <td>{{ item.score.total_scored }} / {{ item.questions_count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% if item.percentage >= 70 %}
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ item.percentage }}%">{{ item.percentage|round(1) }}%</div>
+                                        {% elif item.percentage >= 40 %}
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ item.percentage }}%">{{ item.percentage|round(1) }}%</div>
+                                        {% else %}
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ item.percentage }}%">{{ item.percentage|round(1) }}%</div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ item.score.timestamp.strftime('%d %b, %Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_score', score_id=item.score.id) }}" class="btn btn-sm btn-primary">View</a>
+                                    <a href="{{ url_for('take_quiz', quiz_id=item.quiz.id) }}" class="btn btn-sm btn-success">Retake</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">No scores yet!</h4>
+                <p>You haven't taken any quizzes yet. Start a quiz to see your scores here.</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
